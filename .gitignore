@@ -1,0 +1,14 @@
+*.7z
+*.rar
+*.tar
+*.zip
+
+*.log
+*.sqlite
+
+Thumbs.db
+
+node_modules
+
+.idea
+.vscode
