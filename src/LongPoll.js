@@ -1,9 +1,9 @@
 const EventEmitter = require('events');
 
 const Axios = require('axios');
-const debug = require('debug')('telegram-bot-wrapper:LongPool');
+const debug = require('debug')('telegram-bot-wrapper:LongPoll');
 
-class LongPool extends EventEmitter {
+class LongPoll extends EventEmitter {
 
     static get BASE_API_URL() {
         return 'https://api.telegram.org';
@@ -33,7 +33,7 @@ class LongPool extends EventEmitter {
 
         this.config = config;
 
-        this.longPollInstance = LongPool.createInstance(LongPool.BASE_API_URL || this.config.baseApiURL, config.token, LongPool.DEFAULT_TIMEOUT || this.config.pollTimeout);
+        this.longPollInstance = LongPoll.createInstance(LongPoll.BASE_API_URL || this.config.baseApiURL, config.token, LongPoll.DEFAULT_TIMEOUT || this.config.pollTimeout);
 
         if (this.longPollInstance) {
             let pollingProcess = this.startPolling();
@@ -56,7 +56,7 @@ class LongPool extends EventEmitter {
         };
     }
 
-    static createInstance(baseApiURL, token, timeout = LongPool.DEFAULT_TIMEOUT, dataParams = {}) {
+    static createInstance(baseApiURL, token, timeout = LongPoll.DEFAULT_TIMEOUT, dataParams = {}) {
         return Axios.create({
             baseURL: `${baseApiURL}/bot${token}/`,
             timeout,
@@ -102,7 +102,7 @@ class LongPool extends EventEmitter {
 
             response.data.result.forEach(update => {
                 try {
-                    LongPool.UPDATABLE_ENTITIES.forEach(entity => {
+                    LongPoll.UPDATABLE_ENTITIES.forEach(entity => {
                         if (update.hasOwnProperty(entity)) {
                             this.emit(entity, update[entity]);
                         }
@@ -122,4 +122,4 @@ class LongPool extends EventEmitter {
 
 }
 
-module.exports = LongPool;
+module.exports = LongPoll;
