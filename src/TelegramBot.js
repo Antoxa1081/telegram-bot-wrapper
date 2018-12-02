@@ -1,6 +1,22 @@
 const EventEmitter = require('events');
 const LongPool = require('./LongPool');
 
+const debug = require('debug')('telegram-bot-wrapper:TelegramBot');
+
+/**
+ * Importing handlers for update events
+ */
+
+const defaultMessageHandler = require('./handlers/defaultMessage');
+const editedMessageHandler = require('./handlers/editedMessage');
+const channelPostHandler = require('./handlers/channelPost');
+const editedChannelPostHandler = require('./handlers/editedChannelPost');
+const callbackQueryHandler = require('./handlers/callbackQuery');
+
+/**
+ * Class representing a TelegramBot.
+ */
+
 class TelegramBot extends EventEmitter {
     constructor(config) {
         super();
@@ -23,29 +39,11 @@ class TelegramBot extends EventEmitter {
     initLongPool() {
         this.longPool = new LongPool(this.config);
 
-        this.longPool.on('message', message => {
-
-            this.emit('message', message);
-            this.emit(`message:${message.chat.id}`, message);
-
-            if (message.chat.id > 0) {
-
-                this.emit('message:user', message);
-                this.emit(`message:${message.from.id}`, message);
-
-                if (message.from.hasOwnProperty('username')) {
-                    this.emit(`message:${message.from.username}`, message);
-                }
-            } else {
-
-                this.emit('message:chat', message);
-                this.emit(`message:${message.from.id}:chat`, message);
-
-                if (message.from.hasOwnProperty('username')) {
-                    this.emit(`message:${message.from.username}:chat`, message);
-                }
-            }
-        });
+        this.longPool.on('message', defaultMessageHandler(this));
+        this.longPool.on('edited_message', editedMessageHandler(this));
+        this.longPool.on('channel_post', channelPostHandler(this));
+        this.longPool.on('edited_channel_post', editedChannelPostHandler(this));
+        this.longPool.on('callback_query', callbackQueryHandler(this));
     }
 
     sendMessage(to, text, additional) {

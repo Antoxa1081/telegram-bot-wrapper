@@ -7,6 +7,12 @@
       "jsx": true
     }
   },
+  "env": {
+    "node": true
+  },
+  "globals": {
+    "exampleGlobalVariable": true
+  },
   "rules": {
     "semi": 2
   }

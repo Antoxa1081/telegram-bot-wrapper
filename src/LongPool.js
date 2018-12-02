@@ -1,7 +1,7 @@
 const EventEmitter = require('events');
 
 const Axios = require('axios');
-const debug = require('debug')('telegram-bot-api:LongPool');
+const debug = require('debug')('telegram-bot-wrapper:LongPool');
 
 class LongPool extends EventEmitter {
 
@@ -13,42 +13,60 @@ class LongPool extends EventEmitter {
         return 180000;
     };
 
+    static get UPDATABLE_ENTITIES() {
+        return [
+            'message',
+            'edited_message',
+            'channel_post',
+            'edited_channel_post',
+            'inline_query',
+            'chosen_inline_result',
+            'callback_query',
+            'shipping_query',
+            'pre_checkout_query',
+        ];
+    }
 
     constructor(config) {
         super();
-
         this.initInstance();
 
-        this.longPollInstance = LongPool.createInstance(LongPool.BASE_API_URL, config.token);
+        this.config = config;
+
+        this.longPollInstance = LongPool.createInstance(LongPool.BASE_API_URL || this.config.baseApiURL, config.token, LongPool.DEFAULT_TIMEOUT || this.config.pollTimeout);
 
         if (this.longPollInstance) {
-            this.startPolling();
+            let pollingProcess = this.startPolling();
         }
     }
 
     initInstance() {
         this.longPollInstance = null;
-        this.isPolled = false;
+        this.isPolling = false;
         this.lastUpdate = {
             id: null,
             result: null,
             timestamp: null,
             data: null
         };
+        this.config = {
+            token: null,
+            baseApiURL: null,
+            pollTimeout: null
+        };
     }
+
     static createInstance(baseApiURL, token, timeout = LongPool.DEFAULT_TIMEOUT, dataParams = {}) {
-        return Axios
-            .create({
-                baseURL: `${baseApiURL}/bot${token}/`,
-                timeout,
-                data: Object.assign({
-                    timeout
-                }, dataParams)
-            });
+        return Axios.create({
+            baseURL: `${baseApiURL}/bot${token}/`,
+            timeout,
+            data: Object.assign({
+                timeout
+            }, dataParams)
+        });
     }
 
     async getUpdates(longPollInstance = this.longPollInstance) {
-
         if (longPollInstance) {
             return await longPollInstance.get('getUpdates', {
                 params: {
@@ -62,21 +80,20 @@ class LongPool extends EventEmitter {
     }
 
     async startPolling() {
-        this.isPolled = true;
+        this.isPolling = true;
 
-        while (this.isPolled) {
+        while (this.isPolling) {
             try {
                 let data = await this.getUpdates(this.longPollInstance);
-                this.pollHandle(data);
+                let handlerProcess = this.pollHandle(data);
             } catch (e) {
-                /* happy song */
+                /* happy song, nothing to do */
             }
         }
     }
 
-    pollHandle(response) {
+    async pollHandle(response) {
         try {
-
 
             this.lastUpdate.timestamp = new Date().getTime();
             this.lastUpdate.id = response.data.result[response.data.result.length - 1].update_id;
@@ -85,9 +102,13 @@ class LongPool extends EventEmitter {
 
             response.data.result.forEach(update => {
                 try {
-                    this.emit('message', update.message);
+                    LongPool.UPDATABLE_ENTITIES.forEach(entity => {
+                        if (update.hasOwnProperty(entity)) {
+                            this.emit(entity, update[entity]);
+                        }
+                    });
                 } catch (e) {
-                    console.error(e);
+                    debug(e);
                 }
             });
         } catch (e) {

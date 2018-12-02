@@ -2,13 +2,17 @@
   "name": "telegram-bot-wrapper",
   "version": "0.0.1",
   "description": "",
-  "main": "TelegramBot.js",
+  "main": "index.js",
   "dependencies": {
-    "axios": "^0.18.0"
+    "axios": "^0.18.0",
+    "debug": "^4.1.0"
   },
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": ">=7.6.0"
   },
   "repository": {
     "type": "git",
