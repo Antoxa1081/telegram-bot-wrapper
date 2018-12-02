@@ -1,5 +1,7 @@
 const EventEmitter = require('events');
+
 const LongPoll = require('./LongPoll');
+const MessageTransfer = require('./MessageTransfer');
 
 const debug = require('debug')('telegram-bot-wrapper:TelegramBot');
 
@@ -46,9 +48,13 @@ class TelegramBot extends EventEmitter {
         this.longPoll.on('callback_query', callbackQueryHandler(this));
     }
 
-    sendMessage(to, text, additional) {
+    initMessageTransferEntities() {
+        this.messageTransfer = new MessageTransfer(this.config);
 
-    };
+        for (let entityName in this.messageTransfer.entities) {
+            this[entityName] = this.messageTransfer.entities[entityName];
+        }
+    }
 }
 
 module.exports = TelegramBot;
